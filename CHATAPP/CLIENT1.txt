@@ -1,0 +1,46 @@
+import socket
+import threading
+
+# Server config
+HOST = '127.0.0.1'
+PORT = 5555
+
+def receive_messages(sock):
+    while True:
+        try:
+            msg = sock.recv(1024).decode('utf-8')
+            if msg:
+                print(f"\r{msg}\n> ", end="")
+        except:
+            print("\n[Disconnected from server]")
+            sock.close()
+            break
+
+def send_messages(sock, username):
+    while True:
+        msg = input("> ")
+        if msg.lower() == 'exit':
+            print("[Exiting...]")
+            sock.close()
+            break
+        full_msg = f"{username}: {msg}"
+        sock.send(full_msg.encode('utf-8'))
+
+def start_client():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.connect((HOST, PORT))
+    except:
+        print(f"[ERROR] Unable to connect to server at {HOST}:{PORT}")
+        return
+
+    username = input("Enter your username: ")
+    print(f"[CONNECTED] Type your messages below (type 'exit' to quit):")
+
+    recv_thread = threading.Thread(target=receive_messages, args=(sock,), daemon=True)
+    recv_thread.start()
+
+    send_messages(sock, username)
+
+if __name__ == "__main__":
+    start_client()
